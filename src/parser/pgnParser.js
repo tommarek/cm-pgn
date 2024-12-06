@@ -2273,8 +2273,6 @@ module.exports = {
 };
 */
 
-console.log("pgnParser module loaded");
-
 export class pgnParser {
   static parse(history, options) {
     return peg$parse(history, options);
