@@ -53,12 +53,14 @@ export class History {
                 const notation = parsedMove.notation.notation;
                 // Handle null move
                 if (notation === "--") {
+                    // set the color to the next player
+                    const color = chess.turn();
                     const updatedFen = this.update_fen_after_null_move(chess.fen());
                     chess.load(updatedFen);
 
                     const move = {
-                        fen: chess.fen(), // Save the updated FEN
-                        color: chess.turn(),
+                        fen: chess.fen(),
+                        color: color,
                         previous: previousMove,
                         ply: ply,
                         san: "--",
@@ -194,7 +196,6 @@ export class History {
     }
 
     addMove(notation, previous = null, sloppy = true) {
-        console.log("addMove", notation)
         if (!previous) {
             if (this.moves.length > 0) {
                 previous = this.moves[this.moves.length - 1]
@@ -217,7 +218,6 @@ export class History {
             return move;
         }
 
-        console.log('about to validate move', notation, previous, sloppy);
         const move = this.validateMove(notation, previous, sloppy)
         if (!move) {
             throw new Error("invalid move")

@@ -35,6 +35,7 @@ describe('PgnWithNullMoves', () => {
 
         // Verify specific null moves
         assert.equal(pgn.history.moves[4].san, '--');
+        assert.equal(pgn.history.moves[4].color, 'w');
     });
 
     it('should parse a more complex game with null moves and variations', () => {
@@ -76,19 +77,21 @@ describe('PgnWithNullMoves', () => {
         assert.equal(history.moves[1].variations.length, 1)
         assert.equal(history.moves[3].san, "--")
         assert.equal(history.moves[3].color, "b")
-    })
+    });
 
 
-    // it('should add a variation with a null move as white', () => {
-    //     const history = new History()
-    //     const ply1 = history.addMove("e4")
-    //     history.addMove("e6")
-    //     history.addMove("d3")
-    //     history.addMove("d5")
-    //     history.addMove("--")
-    //     history.addMove("e5", ply1)
+    it('should add a variation with a null move as white', () => {
+        const history = new History()
+        const ply1 = history.addMove("e4")
+        history.addMove("e6")
+        history.addMove("d3")
+        history.addMove("d5")
+        history.addMove("--")
+        history.addMove("e5", ply1)
 
-    //     assert.equal(history.moves[1].variations.length, 1)
-    // })
+        assert.equal(history.moves[1].variations.length, 1)
+        assert.equal(history.moves[4].san, "--")
+        assert.equal(history.moves[4].color, "w")
+    });
 
 });
