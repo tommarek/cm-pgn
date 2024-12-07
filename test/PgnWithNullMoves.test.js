@@ -38,6 +38,36 @@ describe('PgnWithNullMoves', () => {
         assert.equal(pgn.history.moves[4].color, 'w');
     });
 
+
+    it('should parse a game with null moves noted with Z0 and variations', () => {
+        const gamePgn = `[Event ""]
+[White "4. Petroff Defense"]
+[Black ""]
+[Site ""]
+[Round ""]
+[Annotator ""]
+[Result "*"]
+[Date ""]
+[PlyCount "10"]
+
+1. e4 e5 2. Nf3 Nf6 {Petroff defense} 3. Z0 d6 4. Qe2 Nc6 5. d3 Nb8 *`;
+
+        const pgn = new Pgn(gamePgn);
+
+        console.log('header', pgn.header);
+        console.log('history', pgn.history);
+
+        // Basic assertions for game header
+        assert.equal(pgn.header.tags["White"], "4. Petroff Defense");
+
+        // Check moves length
+        assert.equal(pgn.history.moves.length, 10);
+
+        // Verify specific null moves
+        assert.equal(pgn.history.moves[4].san, '--');
+        assert.equal(pgn.history.moves[4].color, 'w');
+    });
+
     it('should parse a more complex game with null moves and variations', () => {
         const complexGamePgn = `[Event ""]
 [White "4. Petroff Defense"]
