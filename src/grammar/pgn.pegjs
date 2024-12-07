@@ -74,6 +74,7 @@ whiteSpace
 
 nullMove
   = "--" { var hm = {}; hm.notation = '--'; return hm; }
+  / "Z0" { var hm = {}; hm.notation = '--'; return hm; }
 
 halfMove
   = nullMove
