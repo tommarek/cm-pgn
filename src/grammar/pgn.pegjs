@@ -5,20 +5,12 @@
 }
 
 pgn
-  = (pw:pgnStartWhite all:pgnBlack? end:endGame? whiteSpace? { 
-      var arr = (all ? all : []);
-      arr.unshift(pw);
-      if(end) arr.push(end);
-      return arr;
-    }
-    / pb:pgnStartBlack all:pgnWhite? end:endGame? whiteSpace? {
-      var arr = (all ? all : []);
-      arr.unshift(pb);
-      if(end) arr.push(end);
-      return arr;
-    }
-    / whiteSpace? { return [[]]; }
-  )
+  = pw:pgnStartWhite all:pgnBlack?
+      { var arr = (all ? all : []); arr.unshift(pw);return arr; }
+  / pb:pgnStartBlack all:pgnWhite?
+    { var arr = (all ? all : []); arr.unshift(pb); return arr; }
+  / whiteSpace?
+    { return [[]]; }
 
 pgnStartWhite
   = pw:pgnWhite { return pw; }
@@ -29,32 +21,20 @@ pgnStartBlack
 pgnWhite
   = whiteSpace? cm:comment? whiteSpace? mn:moveNumber? whiteSpace? cb:comment? whiteSpace?
     hm:halfMove  whiteSpace? nag:nags?  whiteSpace? ca:comment? whiteSpace? vari:variationWhite? all:pgnBlack?
-    {
-      var arr = (all ? all : []);
-      var move = {};
-      move.turn = 'w'; move.moveNumber = mn;
+    { var arr = (all ? all : []);
+      var move = {}; move.turn = 'w'; move.moveNumber = mn;
       move.notation = hm; move.commentBefore = cb; move.commentAfter = ca; move.commentMove = cm;
-      move.variations = (vari ? vari : []); move.nag = (nag ? nag : null);
-      arr.unshift(move);
-      return arr;
-    }
-  / endGame
-  / whiteSpace? cm:comment? whiteSpace? { return []; }
+      move.variations = (vari ? vari : []); move.nag = (nag ? nag : null); arr.unshift(move); return arr; }
+  / endGame whiteSpace? { return ["endGameResult"]; }
 
 pgnBlack
   = whiteSpace? cm:comment? whiteSpace? me:moveEllipse? whiteSpace? cb:comment? whiteSpace?
-    hm:halfMove whiteSpace? nag:nags? whiteSpace? ca:comment? whiteSpace? vari:variationBlack? all:pgnWhite?
-    {
-      var arr = (all ? all : []);
+    hm:halfMove whiteSpace?  nag:nags? whiteSpace? ca:comment? whiteSpace? vari:variationBlack? all:pgnWhite?
+    { var arr = (all ? all : []);
       var move = {}; move.turn = 'b'; move.moveNumber = me;
       move.notation = hm; move.commentBefore = cb; move.commentAfter = ca;
-      move.variations = (vari ? vari : []); move.nag = (nag ? nag : null);
-      arr.unshift(move);
-      return arr;
-    }
-  / endGame
-  / whiteSpace? cm:comment? whiteSpace? { return []; }
-
+      move.variations = (vari ? vari : []); arr.unshift(move); move.nag = (nag ? nag : null); return arr; }
+  / endGame whiteSpace? { return ["endGameResult"]; }
 
 endGame
   = "1:0" { return ["1:0"]; }

@@ -236,11 +236,11 @@ describe('History', () => {
 
 	it('should load commented pgn with arraows and circles', () => {
 		const gamePgn = `[Event "?"]
-[White "19. Colorado Gambit"]
+[White "Colorado Gambit"]
 [Black "?"]
 [Site "?"]
 [Round "?"]
-[Annotator "GM_Avetik"]
+[Annotator "?"]
 [Result "*"]
 [Date "????.??.??"]
 [ECO "B00"]
@@ -248,10 +248,44 @@ describe('History', () => {
 [GameId "2114839637012246"]
 [SourceVersionDate "2022.02.06"]
 
-{[%evp 0,9,17,25,35,22,104,100,90,86,100,84]} 1. e4 Nc6 2. Nf3 f5 {Colorado gambit} 3. exf5 d5 {[%csl Be5] We just give the pawn pawn, and take control over the e5 square.} 4. Bb5 $1 {with a plan to exchange the bishop with the knight that is defeniding the e5 square and also doubling opponent's paawns} (4. d4 Bxf5 5. Bb5 $165 $16 {[%csl Ge5,Re7] Easy to remember.}) 4... Bxf5 5. Ne5 {[%cal Gd2d4]} *
-
-`
-		const pgn = new Pgn(gamePgn)
-	})
-
+{[%evp 0,9,17,25,35,22,104,100,90,86,100,84]} 1. e4 Nc6 2. Nf3 f5 {Colorado gambit} 3. exf5 d5 {[%csl Be5] We just give the pawn pawn, and take control over the e5 square.} 4. Bb5 $1 {with a plan to exchange the bishop with the knight that is defeniding the e5 square and also doubling opponent's paawns} (4. d4 Bxf5 5. Bb5 $165 $16 {[%csl Ge5,Re7] Easy to remember.}) 4... Bxf5 5. Ne5 {[%cal Gd2d4]} *`;
+	
+		const pgn = new Pgn(gamePgn);
+	
+		const moves = pgn.history.moves;
+		// Moves indexing by ply: 
+		// White's moves at ply 1,3,5,... Black's moves at ply 2,4,6,...
+		// 1. e4 (moves[0]), Nc6 (moves[1])
+		// 2. Nf3 (moves[2]), f5 (moves[3])
+		// 3. exf5 (moves[4]), d5 (moves[5])
+		// 4. Bb5 (moves[6]), Bxf5 (moves[7])
+		// 5. Ne5 (moves[8])
+	
+		// Check the comment after black's move 3...d5, which should contain csl info
+		const blackThirdMove = moves[5]; // d5
+		assert.true(blackThirdMove.commentAfter, "Expected a comment after move d5");
+		assert.true(blackThirdMove.commentAfter.csl, "Expected a 'csl' array in the comment");
+		assert.equal(blackThirdMove.commentAfter.csl.length, 1, "Should have one csl directive");
+		assert.equal(blackThirdMove.commentAfter.csl[0].square, "e5", "The csl square should be 'e5'");
+	
+		// Check the comment after White's 4th move (4. Bb5), which should contain a cal arrow
+		const whiteFourthMove = moves[6]; // Bb5
+		assert.true(whiteFourthMove.commentAfter, "Expected a comment after move Bb5");
+		assert.false(whiteFourthMove.commentAfter.cal, "Not expecting a 'cal' array in the comment");
+	
+		// Check the variation starting right after 4. Bb5:
+		// (4. d4 Bxf5 5. Bb5 $165 $16 {[%csl Ge5,Re7] Easy to remember.})
+		assert.true(whiteFourthMove.variations, "Expected variations after Bb5");
+		assert.true(whiteFourthMove.variations.length > 0, "There should be at least one variation");
+		const variationMoves = whiteFourthMove.variations[0];
+		// Variation moves: 4. d4 (variationMoves[0]), Bxf5 (variationMoves[1]), 5. Bb5 (variationMoves[2])
+		const variationFifthWhiteMove = variationMoves[2];
+		assert.true(variationFifthWhiteMove.commentAfter, "Expected comment after 5. Bb5 in variation");
+		assert.true(variationFifthWhiteMove.commentAfter.csl, "Expected csl array in variation comment");
+		assert.equal(variationFifthWhiteMove.commentAfter.csl.length, 2, "Should have two csl directives in variation");
+		assert.equal(variationFifthWhiteMove.commentAfter.csl[0].square, "e5", "First csl square should be e5");
+		// The second csl: "Re7" means a Red circle on e7
+		assert.equal(variationFifthWhiteMove.commentAfter.csl[1].color, 'R', "Second csl should have red color");
+		assert.equal(variationFifthWhiteMove.commentAfter.csl[1].square, "e7", "Second csl square should be e7");
+	});
 })
