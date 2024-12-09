@@ -27,7 +27,7 @@ describe('History', () => {
         assert.equal(history.moves[1].variations.length, 1)
         assert.equal(history.moves[1].variations[0][0].san, "e6")
         assert.equal(history.moves[2].nag, "$1")
-        assert.equal(history.moves[2].commentAfter, "Great move!")
+        assert.equal(history.moves[2].commentAfter.text, "Great move!")
         assert.equal(history.moves[2].fen, "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2")
         assert.equal(history.moves[3].from, "b8")
         assert.equal(history.moves[3].to, "c6")
@@ -233,4 +233,25 @@ describe('History', () => {
         }
         traverse(allMoves);
     })
+
+	it('should load commented pgn with arraows and circles', () => {
+		const gamePgn = `[Event "?"]
+[White "19. Colorado Gambit"]
+[Black "?"]
+[Site "?"]
+[Round "?"]
+[Annotator "GM_Avetik"]
+[Result "*"]
+[Date "????.??.??"]
+[ECO "B00"]
+[PlyCount "9"]
+[GameId "2114839637012246"]
+[SourceVersionDate "2022.02.06"]
+
+{[%evp 0,9,17,25,35,22,104,100,90,86,100,84]} 1. e4 Nc6 2. Nf3 f5 {Colorado gambit} 3. exf5 d5 {[%csl Be5] We just give the pawn pawn, and take control over the e5 square.} 4. Bb5 $1 {with a plan to exchange the bishop with the knight that is defeniding the e5 square and also doubling opponent's paawns} (4. d4 Bxf5 5. Bb5 $165 $16 {[%csl Ge5,Re7] Easy to remember.}) 4... Bxf5 5. Ne5 {[%cal Gd2d4]} *
+
+`
+		const pgn = new Pgn(gamePgn)
+	})
+
 })

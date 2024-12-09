@@ -5,12 +5,20 @@
 }
 
 pgn
-  = pw:pgnStartWhite all:pgnBlack?
-      { var arr = (all ? all : []); arr.unshift(pw);return arr; }
-  / pb:pgnStartBlack all:pgnWhite?
-    { var arr = (all ? all : []); arr.unshift(pb); return arr; }
-  / whiteSpace?
-    { return [[]]; }
+  = (pw:pgnStartWhite all:pgnBlack? end:endGame? whiteSpace? { 
+      var arr = (all ? all : []);
+      arr.unshift(pw);
+      if(end) arr.push(end);
+      return arr;
+    }
+    / pb:pgnStartBlack all:pgnWhite? end:endGame? whiteSpace? {
+      var arr = (all ? all : []);
+      arr.unshift(pb);
+      if(end) arr.push(end);
+      return arr;
+    }
+    / whiteSpace? { return [[]]; }
+  )
 
 pgnStartWhite
   = pw:pgnWhite { return pw; }
@@ -21,20 +29,32 @@ pgnStartBlack
 pgnWhite
   = whiteSpace? cm:comment? whiteSpace? mn:moveNumber? whiteSpace? cb:comment? whiteSpace?
     hm:halfMove  whiteSpace? nag:nags?  whiteSpace? ca:comment? whiteSpace? vari:variationWhite? all:pgnBlack?
-    { var arr = (all ? all : []);
-      var move = {}; move.turn = 'w'; move.moveNumber = mn;
+    {
+      var arr = (all ? all : []);
+      var move = {};
+      move.turn = 'w'; move.moveNumber = mn;
       move.notation = hm; move.commentBefore = cb; move.commentAfter = ca; move.commentMove = cm;
-      move.variations = (vari ? vari : []); move.nag = (nag ? nag : null); arr.unshift(move); return arr; }
+      move.variations = (vari ? vari : []); move.nag = (nag ? nag : null);
+      arr.unshift(move);
+      return arr;
+    }
   / endGame
+  / whiteSpace? cm:comment? whiteSpace? { return []; }
 
 pgnBlack
   = whiteSpace? cm:comment? whiteSpace? me:moveEllipse? whiteSpace? cb:comment? whiteSpace?
-    hm:halfMove whiteSpace?  nag:nags? whiteSpace? ca:comment? whiteSpace? vari:variationBlack? all:pgnWhite?
-    { var arr = (all ? all : []);
+    hm:halfMove whiteSpace? nag:nags? whiteSpace? ca:comment? whiteSpace? vari:variationBlack? all:pgnWhite?
+    {
+      var arr = (all ? all : []);
       var move = {}; move.turn = 'b'; move.moveNumber = me;
       move.notation = hm; move.commentBefore = cb; move.commentAfter = ca;
-      move.variations = (vari ? vari : []); arr.unshift(move); move.nag = (nag ? nag : null); return arr; }
+      move.variations = (vari ? vari : []); move.nag = (nag ? nag : null);
+      arr.unshift(move);
+      return arr;
+    }
   / endGame
+  / whiteSpace? cm:comment? whiteSpace? { return []; }
+
 
 endGame
   = "1:0" { return ["1:0"]; }
@@ -45,7 +65,78 @@ endGame
   / "*"  { return ["*"]; }
 
 comment
-  = cl cm:[^}]* cr { return cm.join("").trim(); }
+  = cl sc:specialComments? cm:commentText cr {
+      if (sc) {
+        return {
+          text: cm.trim(),
+          csl: sc.csl || null,
+          cal: sc.cal || null
+        };
+      } else {
+        return {
+          text: cm.trim(),
+          csl: null,
+          cal: null
+        };
+      }
+    }
+
+commentText
+  = t:[^{}]* { return t.join(""); }
+
+specialComments
+  = specials:(specialComment ws?)+
+    { 
+      var result = { csl: null, cal: null };
+      for (var i=0; i<specials.length; i++) {
+        var sc = specials[i][0];
+        if (sc.type === 'csl') {
+          result.csl = sc.value;
+        } else if (sc.type === 'cal') {
+          result.cal = sc.value;
+        }
+      }
+      return result;
+    }
+
+specialComment
+  = "[" "%csl" ws squares:cslSquares "]"
+    { return { type: 'csl', value: squares }; }
+  / "[" "%cal" ws moves:calMoves "]"
+    { return { type: 'cal', value: moves }; }
+
+cslSquares
+  = first:cslSquare rest:("," cslSquare)* {
+      var list = [first];
+      for (var i=0; i<rest.length; i++) { list.push(rest[i][1]); }
+      return list;
+    }
+
+cslSquare
+  = color:cslColor? square:square { 
+      return { color: color || null, square: square }; 
+    }
+
+cslColor
+  = [RGB]
+
+calMoves
+  = first:calMovePair rest:("," calMovePair)* {
+      var list = [first];
+      for (var i=0; i<rest.length; i++) { list.push(rest[i][1]); }
+      return list;
+    }
+
+calMovePair
+  = color:calColor? fromCol:column fromRow:row toCol:column toRow:row {
+      return { color: color || null, from: fromCol + fromRow, to: toCol + toRow };
+    }
+
+calColor
+  = [RGB]
+
+square
+  = column:column row:row { return column + row; }
 
 cl = '{'
 
@@ -70,7 +161,10 @@ integer "integer"
     = digits:[0-9]+ { return makeInteger(digits); }
 
 whiteSpace
-    = " "+ { return '';}
+  = [ \t\n\r]+ { return ''; }
+
+ws
+  = whiteSpace
 
 nullMove
   = "--" { var hm = {}; hm.notation = '--'; return hm; }
