@@ -243,52 +243,90 @@ export class History {
         return move
     }   
 
-    render(renderComments = true, renderNags = true) {
-        const renderVariation = (variation, needReminder = false) => {
-            let result = "";
-            for (let move of variation) {
-                if (move.notation === "--") {
-                    result += "-- ";
-                    continue;
-                }
-                if (move.ply % 2 === 1) {
-                    result += Math.floor(move.ply / 2) + 1 + ". ";
-                } else if (result.length === 0 || needReminder) {
-                    result += move.ply / 2 + "... ";
-                }
-                needReminder = false;
-                if (renderNags && move.nag) {
-                    result += "$" + move.nag + " ";
-                }
-                if (renderComments && move.commentBefore) {
-                    result += "{" + move.commentBefore + "} ";
-                    needReminder = true;
-                }
-                result += move.san + " ";
-                if (renderComments && move.commentMove) {
-                    result += "{" + move.commentMove + "} ";
-                    needReminder = true;
-                }
-                if (renderComments && move.commentAfter) {
-                    result += "{" + move.commentAfter + "} ";
-                    needReminder = true;
-                }
-                if (move.variations.length > 0) {
-                    for (let variation of move.variations) {
-                        result += "(" + renderVariation(variation) + ") ";
-                        needReminder = true;
-                    }
-                }
-                result += " ";
-            }
-            return result;
-        };
-        let ret = renderVariation(this.moves);
-        // remove spaces before brackets
-        ret = ret.replace(/\s+\)/g, ")");
-        // remove double spaces
-        ret = ret.replace(/\s\s+/g, " ").trim();
-        return ret;
-    }   
+	render(renderComments = true, renderNags = true) {
+		const renderComment = (commentObj) => {
+			// commentObj is always an object with {text, csl, cal}
+			let parts = [];
+			if (commentObj.csl && commentObj.csl.length > 0) {
+				// Each csl entry has { color: 'R', square: 'd4' }, for example
+				// Example: [%csl Rd4,Gd5]
+				const cslEntries = commentObj.csl.map(entry => entry.color + entry.square).join(",");
+				parts.push(`[%csl ${cslEntries}]`);
+			}
+			if (commentObj.cal && commentObj.cal.length > 0) {
+				// Each cal entry has { color: 'R', from: 'c8', to: 'f5' }, for example
+				// Example: [%cal Rc8f5,Ra8d8]
+				const calEntries = commentObj.cal.map(entry => entry.color + entry.from + entry.to).join(",");
+				parts.push(`[%cal ${calEntries}]`);
+			}
+			if (commentObj.text && commentObj.text.trim() !== "") {
+				parts.push(commentObj.text.trim());
+			}
+			return parts.join(" ");
+		};
+	
+		const renderVariation = (variation, needReminder = false) => {
+			let result = "";
+			for (let move of variation) {
+				if (move.notation === "--") {
+					// Null move
+					result += "-- ";
+					continue;
+				}
+				if (move.ply % 2 === 1) {
+					result += Math.floor(move.ply / 2) + 1 + ". ";
+				} else if (result.length === 0 || needReminder) {
+					result += (move.ply / 2) + "... ";
+				}
+				needReminder = false;
+	
+				if (renderNags && move.nag) {
+					result += move.nag + " ";
+				}
+	
+				// Render comments before the move
+				if (renderComments && move.commentBefore && 
+					(move.commentBefore.text || move.commentBefore.csl || move.commentBefore.cal)) {
+					result += "{" + renderComment(move.commentBefore) + "} ";
+					needReminder = true;
+				}
+	
+				// Render the move
+				result += move.san + " ";
+	
+				// Render comments on the move line
+				if (renderComments && move.commentMove && 
+					(move.commentMove.text || move.commentMove.csl || move.commentMove.cal)) {
+					result += "{" + renderComment(move.commentMove) + "} ";
+					needReminder = true;
+				}
+	
+				// Render comments after the move
+				if (renderComments && move.commentAfter && 
+					(move.commentAfter.text || move.commentAfter.csl || move.commentAfter.cal)) {
+					result += "{" + renderComment(move.commentAfter) + "} ";
+					needReminder = true;
+				}
+	
+				// Render variations
+				if (move.variations && move.variations.length > 0) {
+					for (let variation of move.variations) {
+						result += "(" + renderVariation(variation) + ") ";
+						needReminder = true;
+					}
+				}
+	
+				result += " ";
+			}
+			return result;
+		};
+	
+		let ret = renderVariation(this.moves);
+		// Remove spaces before brackets
+		ret = ret.replace(/\s+\)/g, ")");
+		// Remove double spaces
+		ret = ret.replace(/\s\s+/g, " ").trim();
+		return ret;
+	}
 
 }

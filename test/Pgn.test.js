@@ -171,6 +171,7 @@ wäre, diese Stellung gegen Tal weiterzuspielen.} ) 1-0`)
 
 1... Bf8 (1... Qf8? 2. Qxf8+ Bxf8 3. exd4) 2. exd4 Qxd4+ {%Q} 3. Kh1 Bh3 
 0-1`)
+		console.log('parsed moves', pgn.history.moves.length)
         assert.equal(5, pgn.history.moves.length)
         assert.equal("Schaak opheffen", pgn.header.tags[TAGS.White])
         assert.equal("app 037-1", pgn.header.tags[TAGS.Annotator])
@@ -229,7 +230,7 @@ Nd6 Kxg4 23. c5 Kf3 24. c6 e4 25. c7 Bd4 26. Nb5 Be5 27. Bd6 e3 28. Bxe5 fxe5
         assert.equal(history.moves[1].variations.length, 1)
         assert.equal(history.moves[1].variations[0][0].san, "e6")
         assert.equal(history.moves[2].nag, "$1")
-        assert.equal(history.moves[2].commentAfter, "Great move!")
+        assert.equal(history.moves[2].commentAfter.text, "Great move!")
         assert.equal(history.moves[2].fen, "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2")
         assert.equal(history.moves[3].from, "b8")
         assert.equal(history.moves[3].to, "c6")
